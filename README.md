@@ -1,15 +1,17 @@
 Microsoft COCO Caption Evaluation
 ===================
 
-Evaluation codes for MS COCO caption generation.
+Evaluation codes for MS COCO caption generation. This repository is a Python 3.x
+version of the original 2.x [codebase](https://github.com/tylin/coco-caption)
 
-## Requirements ##
-- java 1.8.0
-- python 2.7
+## Changes
 
-## Files ##
-./
-- cocoEvalCapDemo.py (demo script)
+## Requirements
+- JAVA Runtime
+- Python 3.x
+
+## Files
+./cocoeval: Standalone evaluation script
 
 ./annotation
 - captions_val2014.json (MS COCO 2014 caption validation set)
@@ -20,7 +22,7 @@ Evaluation codes for MS COCO caption generation.
 - Visit MS COCO [format](http://mscoco.org/dataset/#format) page for more details.
 
 ./pycocoevalcap: The folder where all evaluation codes are stored.
-- evals.py: The file includes COCOEavlCap class that can be used to evaluate results on COCO.
+- evals.py: The file includes COCOEvalCap class that can be used to evaluate results on COCO.
 - tokenizer: Python wrapper of Stanford CoreNLP PTBTokenizer
 - bleu: Bleu evalutation codes
 - meteor: Meteor evaluation codes
