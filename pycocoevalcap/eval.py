@@ -18,7 +18,6 @@ class COCOEvalCap:
 
     def evaluate(self):
         imgIds = self.params['image_id']
-        # imgIds = self.coco.getImgIds()
         gts = {}
         res = {}
         for imgId in imgIds:
@@ -42,7 +41,7 @@ class COCOEvalCap:
             (Meteor(), "METEOR"),
             (Rouge(), "ROUGE_L"),
             (Cider(), "CIDEr"),
-            (Spice(), "SPICE")
+            (Spice(), "SPICE"),
         ]
 
         # =================================================
@@ -73,4 +72,4 @@ class COCOEvalCap:
             self.imgToEval[imgId][method] = score
 
     def setEvalImgs(self):
-        self.evalImgs = [eval for imgId, eval in list(self.imgToEval.items())]
+        self.evalImgs = [eval_ for imgId, eval_ in self.imgToEval.items()]
