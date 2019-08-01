@@ -90,7 +90,7 @@ class COCO:
 
         cats = []
         catToImgs = []
-        if self.dataset['type'] == 'instances':
+        if self.dataset.get('type', '') == 'instances':
             cats = {cat['id']: [] for cat in self.dataset['categories']}
             for cat in self.dataset['categories']:
                 cats[cat['id']] = cat
@@ -112,7 +112,7 @@ class COCO:
         Print information about the annotation file.
         :return:
         """
-        for key, value in self.datset['info'].items():
+        for key, value in self.dataset['info'].items():
             print '%s: %s'%(key, value)
 
     def getAnnIds(self, imgIds=[], catIds=[], areaRng=[], iscrowd=None):
@@ -266,15 +266,19 @@ class COCO:
         """
         res = COCO()
         res.dataset['images'] = [img for img in self.dataset['images']]
-        res.dataset['info'] = copy.deepcopy(self.dataset['info'])
-        res.dataset['type'] = copy.deepcopy(self.dataset['type'])
-        res.dataset['licenses'] = copy.deepcopy(self.dataset['licenses'])
+        res.dataset['info'] = copy.deepcopy(self.dataset.get('info', {}))
+        res.dataset['type'] = copy.deepcopy(self.dataset.get('type', ''))
+        res.dataset['licenses'] = copy.deepcopy(self.dataset.get('licenses', []))
 
         print 'Loading and preparing results...     '
         time_t = datetime.datetime.utcnow()
-        anns    = json.load(open(resFile))
+        anns = json.load(open(resFile))
         assert type(anns) == list, 'results in not an array of objects'
-        annsImgIds = [ann['image_id'] for ann in anns]
+
+        # If the results contain more annotations, restrict them to the
+        # matching ones with the ground truth annotations
+        _imgIds = self.getImgIds()
+        annsImgIds = [ann['image_id'] for ann in anns if ann['image_id'] in _imgIds]
         assert set(annsImgIds) == (set(annsImgIds) & set(self.getImgIds())), \
                'Results do not correspond to current coco set'
         if 'caption' in anns[0]:
