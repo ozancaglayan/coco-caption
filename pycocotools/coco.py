@@ -44,7 +44,6 @@ __version__ = '1.0.1'
 # Licensed under the Simplified BSD License [see bsd.txt]
 
 import json
-import datetime
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
@@ -70,9 +69,7 @@ class COCO:
         self.cats = []
         if annotation_file is not None:
             print('loading annotations into memory...')
-            time_t = datetime.datetime.utcnow()
             dataset = json.load(open(annotation_file, 'r'))
-            print(datetime.datetime.utcnow() - time_t)
             self.dataset = dataset
             self.createIndex()
 
@@ -272,16 +269,13 @@ class COCO:
         res.dataset['licenses'] = copy.deepcopy(self.dataset.get('licenses', []))
 
         print('Loading and preparing results...     ')
-        time_t = datetime.datetime.utcnow()
         anns = json.load(open(resFile))
         assert type(anns) == list, 'results in not an array of objects'
 
-        # If the results contain more annotations, restrict them to the
-        # matching ones with the ground truth annotations
-        _imgIds = self.getImgIds()
-        annsImgIds = [ann['image_id'] for ann in anns if ann['image_id'] in _imgIds]
-        assert set(annsImgIds) == (set(annsImgIds) & set(self.getImgIds())), \
-               'Results do not correspond to current coco set'
+        # NOTE: This should not be an issue?!
+        # annsImgIds = [ann['image_id'] for ann in anns]
+        # assert set(annsImgIds) == (set(annsImgIds) & set(self.getImgIds())), \
+               # 'Results do not correspond to current coco set'
         if 'caption' in anns[0]:
             imgIds = set([img['id'] for img in res.dataset['images']]) & set([ann['image_id'] for ann in anns])
             res.dataset['images'] = [img for img in res.dataset['images'] if img['id'] in imgIds]
@@ -303,7 +297,6 @@ class COCO:
                 ann['bbox'] = []
                 ann['id'] = id
                 ann['iscrowd'] = 0
-        print('DONE (t={:.2f})'.format((datetime.datetime.utcnow() - time_t).total_seconds()))
 
         res.dataset['annotations'] = anns
         res.createIndex()
