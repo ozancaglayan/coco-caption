@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+import argparse
+
+from pycocotools.coco import COCO
+from pycocoevalcap.eval import COCOEvalCap
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='cocoeval',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="COCO Evaluation Script",
+        argument_default=argparse.SUPPRESS)
+
+    parser.add_argument('-g', '--gts', type=str, required=True,
+                        help="Ground-truth COCO style .json file")
+    parser.add_argument('-r', '--res', type=str, required=True,
+                        help="COCO style results annotation .json file")
+#     parser.add_argument('-f', '--force', action='store_true',
+                        # help="Evaluate the intersection of gts and res image IDs")
+    parser.add_argument('-l', '--language', type=str, default='en',
+                        help="Language code for METEOR evaluation")
+
+    args = parser.parse_args()
+
+    coco = COCO(args.gts)
+    coco_res = coco.loadRes(args.res)
+    coco_eval = COCOEvalCap(coco, coco_res)
+    coco_eval.params['image_id'] = coco_res.getImgIds()
+    coco_eval.evaluate()
