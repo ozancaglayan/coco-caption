@@ -34,9 +34,9 @@ class Cider:
 
         cider_scorer = CiderScorer(n=self._n, sigma=self._sigma)
 
-        for id in imgIds:
-            hypo = res[id]
-            ref = gts[id]
+        for idx in imgIds:
+            hypo = res[idx]
+            ref = gts[idx]
 
             # Sanity check.
             assert(type(hypo) is list)
