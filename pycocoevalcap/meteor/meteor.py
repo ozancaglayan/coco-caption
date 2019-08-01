@@ -42,6 +42,7 @@ class Meteor:
             scores.append(float(self.meteor_p.stdout.readline().strip()))
         score = float(self.meteor_p.stdout.readline().strip())
         self.lock.release()
+        self.__del__()
 
         return score, scores
 
@@ -75,6 +76,7 @@ class Meteor:
     def __del__(self):
         self.lock.acquire()
         self.meteor_p.stdin.close()
+        self.meteor_p.terminate()
         self.meteor_p.kill()
-        self.meteor_p.wait()
+        self.meteor_p.wait(timeout=2)
         self.lock.release()
