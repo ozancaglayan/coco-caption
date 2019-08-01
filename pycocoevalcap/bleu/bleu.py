@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 
+#
 # File Name : bleu.py
 #
 # Description : Wrapper for BLEU scorer.
@@ -36,9 +36,9 @@ class Bleu:
 
             bleu_scorer += (hypo[0], ref)
 
-        #score, scores = bleu_scorer.compute_score(option='shortest')
+        # score, scores = bleu_scorer.compute_score(option='shortest')
         score, scores = bleu_scorer.compute_score(option='closest', verbose=1)
-        #score, scores = bleu_scorer.compute_score(option='average', verbose=1)
+        # score, scores = bleu_scorer.compute_score(option='average', verbose=1)
 
         # return (bleu, bleu_info)
         return score, scores
