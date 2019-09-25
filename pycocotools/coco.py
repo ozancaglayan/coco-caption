@@ -68,14 +68,12 @@ class COCO:
         self.imgs = []
         self.cats = []
         if annotation_file is not None:
-            print('loading annotations into memory...')
             dataset = json.load(open(annotation_file, 'r'))
             self.dataset = dataset
             self.createIndex()
 
     def createIndex(self):
         # create index
-        print('creating index...')
         imgToAnns = {ann['image_id']: [] for ann in self.dataset['annotations']}
         anns =      {ann['id']:       [] for ann in self.dataset['annotations']}
         for ann in self.dataset['annotations']:
@@ -95,8 +93,6 @@ class COCO:
             catToImgs = {cat['id']: [] for cat in self.dataset['categories']}
             for ann in self.dataset['annotations']:
                 catToImgs[ann['category_id']] += [ann['image_id']]
-
-        print('index created!')
 
         # create class members
         self.anns = anns
@@ -268,7 +264,6 @@ class COCO:
         res.dataset['type'] = copy.deepcopy(self.dataset.get('type', ''))
         res.dataset['licenses'] = copy.deepcopy(self.dataset.get('licenses', []))
 
-        print('Loading and preparing results...     ')
         anns = json.load(open(resFile))
         assert type(anns) == list, 'results in not an array of objects'
 
