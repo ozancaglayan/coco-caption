@@ -16,14 +16,24 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="COCO Evaluation Script")
 
-    parser.add_argument('-g', '--gts', type=str, required=True,
+    parser.add_argument('-g', '--gts', type=str,
                         help="Ground-truth COCO style .json file")
-    parser.add_argument('-r', '--res', nargs='+',
-                        help="COCO style results annotation .json file(s)")
     parser.add_argument('-m', '--metric', default=None,
                         help="Dumps the requested metric for single system evaluation.")
+    parser.add_argument('-c', '--compute', default='bleu,meteor,cider,rouge', type=str,
+                        help="Restrict the computed metrics (optional).")
     parser.add_argument('-w', '--write-scores', action='store_true',
                         help="Dump the score per each system into a .json file.")
+    parser.add_argument('res', nargs='+',
+                        help="COCO style results annotation .json file(s)")
+
+    names_to_scorers = {
+        'bleu': ['Bleu_1', 'Bleu_2', 'Bleu_3', 'Bleu_4'],
+        'meteor': ['METEOR'],
+        'cider': ['CIDEr'],
+        'rouge': ['ROUGE_L'],
+        'spice': ['SPICE'],
+    }
 
     args = parser.parse_args()
 
@@ -34,13 +44,23 @@ if __name__ == '__main__':
     # Create COCO object with the ground-truth
     coco = COCO(args.gts)
 
-    headers = ['Bleu_1', 'Bleu_4', 'METEOR', 'CIDEr', 'ROUGE_L']
+    compute_metrics = list(args.compute.split(','))
+    if args.metric is not None:
+        assert args.metric in compute_metrics, "-m argument is not within -c metrics."
+
+    if len(compute_metrics) == 1:
+        args.metric = compute_metrics[0]
+
     scores = []
+    headers = []
+    for cm in compute_metrics:
+        headers.extend(names_to_scorers[cm])
 
     for result in args.res:
         path = Path(result)
-        model_name = path.name
-        score_file = Path(str(path.name) + '.score')
+        model_name = path.absolute().parts[-2]
+        score_file = Path(str(path) + '.score')
+
         if len(args.res) > 1:
             # Only print when multiple systems are given
             print('Evaluating {} ...'.format(model_name))
@@ -51,20 +71,26 @@ if __name__ == '__main__':
             coco_res = coco.loadRes(result)
             coco_eval = COCOEvalCap(coco, coco_res)
             coco_eval.params['image_id'] = coco_res.getImgIds()
-            score_dict = coco_eval.evaluate(verbose=False)
+            score_dict = coco_eval.evaluate(verbose=False, metrics=compute_metrics)
+            # Reduce to requested metrics
+            score_dict = {k: score_dict[k] for k in headers}
             if args.write_scores:
                 with open(score_file, 'w') as f:
                     json.dump(score_dict, f)
 
-        if args.metric:
-            # Single system should have been given
-            print(score_dict[args.metric])
+        if len(args.res) == 1:
+            if args.metric:
+                # Bleu -> Bleu_4
+                metric = names_to_scorers[args.metric.lower()][-1]
+                print(score_dict[metric])
+            else:
+                print(score_dict)
             sys.exit(0)
 
         scores.append(
             [model_name.replace('.json', '')] + [score_dict[m] for m in headers],
         )
 
-    # Sort by METEOR
-    scores = sorted(scores, key=lambda x: x[3])
+    # Sort by sum of metrics
+    scores = sorted(scores, key=lambda x: sum(x[1:]))
     print(tabulate.tabulate(scores, headers=headers, floatfmt='.3f'))
