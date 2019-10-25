@@ -11,21 +11,32 @@ from .spice.spice import Spice
 
 class COCOEvalCap:
     def __init__(self, coco, cocoRes):
-        self.evalImgs = []
-        self.eval = {}
-        self.imgToEval = {}
         self.coco = coco
         self.cocoRes = cocoRes
         self.params = {'image_id': coco.getImgIds()}
+
+        self.eval = {}
+        self.evalImgs = []
+        self.imgToEval = {}
+
+        # Stitches back @-@ and BPE tokens
         self.cleanup_fn = lambda s: re.sub(
             '\s*@-@\s*', '-', s.replace("@@ ", "").replace("@@", ""))
+
+        self.scorer_classes = {
+            'bleu': (Bleu, ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
+            'meteor': (Meteor, "METEOR"),
+            'rouge': (Rouge, "ROUGE_L"),
+            'cider': (Cider, "CIDEr"),
+            'spice': (Spice, "SPICE"),
+        }
 
     def postprocess(self, caps):
         for cap in caps:
             cap['caption'] = self.cleanup_fn(cap['caption'])
         return caps
 
-    def evaluate(self, verbose=True):
+    def evaluate(self, verbose=True, metrics=None):
         imgIds = self.params['image_id']
         gts = {}
         res = {}
@@ -34,7 +45,7 @@ class COCOEvalCap:
             res[imgId] = self.postprocess(self.cocoRes.imgToAnns[imgId])
 
         # =================================================
-        # Set up scorers
+        # Set up tokenizer and tokenize
         # =================================================
         tokenizer = PTBTokenizer()
         gts = tokenizer.tokenize(gts)
@@ -43,13 +54,12 @@ class COCOEvalCap:
         # =================================================
         # Set up scorers
         # =================================================
-        scorers = [
-            (Bleu(), ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
-            (Meteor(), "METEOR"),
-            (Rouge(), "ROUGE_L"),
-            (Cider(), "CIDEr"),
-            #(Spice(), "SPICE"),
-        ]
+        if metrics is None:
+            # Use all scorers
+            metrics = self.scorer_classes.keys()
+
+        scorers = [self.scorer_classes[k] for k in metrics]
+        scorers = [(klass(), strs) for (klass, strs) in scorers]
 
         # =================================================
         # Compute scores
